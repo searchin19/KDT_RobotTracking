@@ -35,7 +35,7 @@ def generate_launch_description():
     # ExecuteProcess의 cmd 리스트 내에서 LaunchConfiguration을 직접 조합하려면 
     # 별도의 처리가 필요하므로, 가장 안정적인 문자열 조합 방식을 사용합니다.
     app_path = PathJoinSubstitution([
-        '/home', user, 'ros2_ws', 'src', 'KDT_RobotTracking', 'KDT_RobotTracking', 'app.py'
+        '/home', user, 'ros2_ws', 'src', 'kdt_robot_tracking', 'kdt_robot_tracking', 'app.py'
     ])
 
     return LaunchDescription([
@@ -64,7 +64,7 @@ def generate_launch_description():
 
         # 1. 웹캠 노드 (mode가 'real'일 때만 실행)
         Node(
-            package='KDT_RobotTracking',
+            package='kdt_robot_tracking',
             executable='webcam_node',
             name='webcam_node',
             condition=IfCondition(EqualsSubstitution(mode, 'real')),
@@ -73,7 +73,7 @@ def generate_launch_description():
 
         # 2. Image 전처리 및 AruCo Mark Detect
         Node(
-            package='KDT_RobotTracking',
+            package='kdt_robot_tracking',
             executable='aruco_detector_node',
             name='aruco_detector_node',
             condition=IfCondition(EqualsSubstitution(mode, 'real')),
@@ -81,14 +81,14 @@ def generate_launch_description():
 
         # 3. Tracking Path Calculator
         Node(
-            package='KDT_RobotTracking',
+            package='kdt_robot_tracking',
             executable='tracker_node',
             name='tracker_node'
         ),
 
         # 4. ROS <==> machine(ESP32) 통신 bridge
         Node(
-            package='KDT_RobotTracking',
+            package='kdt_robot_tracking',
             executable='serial_bridge_node',
             name='serial_bridge_node_0',
             namespace='robot_0',
@@ -96,7 +96,7 @@ def generate_launch_description():
             output='screen'
         ),
         Node(
-            package='KDT_RobotTracking',
+            package='kdt_robot_tracking',
             executable='serial_bridge_node',
             name='serial_bridge_node_1',
             namespace='robot_1',
