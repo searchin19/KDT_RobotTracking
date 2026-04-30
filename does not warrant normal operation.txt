@@ -1,1 +1,13 @@
 KDT_RobotTracking 저장소에는 조별 프로젝트의 내용이 담겨있으며, 일부 내용은 실제 적용되어 증명된 코드가 아닙니다.
+
+
+ros2 launch src/tracking_pj/launch/tracking_launch.py mode:=real
+
+
+ros2 launch ros_gz_sim gz_sim.launch.py gz_args:="robot_tracking_world.sdf"
+
+
+
+
+
+ros2 run ros_gz_bridge parameter_bridge /usb_camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image
