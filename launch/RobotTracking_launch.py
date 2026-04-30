@@ -35,7 +35,7 @@ def generate_launch_description():
     # ExecuteProcess의 cmd 리스트 내에서 LaunchConfiguration을 직접 조합하려면 
     # 별도의 처리가 필요하므로, 가장 안정적인 문자열 조합 방식을 사용합니다.
     app_path = PathJoinSubstitution([
-        '/home', user, 'ros2_ws', 'src', 'tracking_pj', 'tracking_pj', 'app.py'
+        '/home', user, 'ros2_ws', 'src', 'KDT_RobotTracking', 'KDT_RobotTracking', 'app.py'
     ])
 
     return LaunchDescription([
@@ -44,18 +44,36 @@ def generate_launch_description():
         arg_user,
         arg_webcam_port,
 
+        # ros <==> gazebo bridge. mode가 'sim'일 때만 실행되도록 설정.
+        Node(
+            package='ros_gz_bridge',
+            executable='parameter_bridge',
+            name='gz_bridge',
+            arguments=[
+                # 카메라 영상 브릿지 (GZ -> ROS)
+                '/usb_camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
+                # 로봇 위치 정보 브릿지 (GZ -> ROS) - 필요 시 추가
+                # 문법(name remaping) : /<ROS_토픽>@<ROS_타입>[<GZ_타입>@<GZ_토픽>
+                '/robot_0/pos@geometry_msgs/msg/Pose[gz.msgs.Pose@/model/robot_0/pose',
+                '/robot_1/pos@geometry_msgs/msg/Pose[gz.msgs.Pose@/model/robot_1/pose'
+            ],
+            condition=LaunchConfigurationEquals('mode', 'sim'), # 시뮬레이션 모드에서만 실행
+            output='screen'
+        ),
+
+
         # 1. 웹캠 노드 (mode가 'real'일 때만 실행)
         Node(
-            package='tracking_pj',
+            package='KDT_RobotTracking',
             executable='webcam_node',
             name='webcam_node',
             condition=IfCondition(EqualsSubstitution(mode, 'real')),
-            parameters=[{'device': webcam_port}] # 웹캠 포트 전달 예시
+            parameters=[{'port': webcam_port}] # 웹캠 포트 전달 예시
         ),
 
         # 2. Image 전처리 및 AruCo Mark Detect
         Node(
-            package='tracking_pj',
+            package='KDT_RobotTracking',
             executable='aruco_detector_node',
             name='aruco_detector_node',
             condition=IfCondition(EqualsSubstitution(mode, 'real')),
@@ -63,16 +81,27 @@ def generate_launch_description():
 
         # 3. Tracking Path Calculator
         Node(
-            package='tracking_pj',
+            package='KDT_RobotTracking',
             executable='tracker_node',
             name='tracker_node'
         ),
 
-        # 2. 시리얼 브릿지 노드
+        # 4. ROS <==> machine(ESP32) 통신 bridge
         Node(
-            package='tracking_pj',
+            package='KDT_RobotTracking',
             executable='serial_bridge_node',
-            name='serial_bridge_node'
+            name='serial_bridge_node_0',
+            namespace='robot_0',
+            parameters=[{'robot_name': 'robot_0'}],
+            output='screen'
+        ),
+        Node(
+            package='KDT_RobotTracking',
+            executable='serial_bridge_node',
+            name='serial_bridge_node_1',
+            namespace='robot_1',
+            parameters=[{'robot_name': 'robot_1'}],
+            output='screen'
         ),
 
         # 3. Rosbridge WebSocket
